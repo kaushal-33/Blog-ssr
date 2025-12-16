@@ -1,6 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const connectDB = require("./config/db.js");
+const cookieParser = require("cookie-parser");
 const indexRouter = require("./routes/indexRoute.js");
 const authRouter = require("./routes/authRoute.js");
 const app = express();
@@ -11,6 +12,8 @@ connectDB()
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
+app.use("/uploads", express.static("uploads"));
+app.use(cookieParser());
 app.use("/", indexRouter);
 app.use("/auth", authRouter);
 app.listen(PORT, () => {
