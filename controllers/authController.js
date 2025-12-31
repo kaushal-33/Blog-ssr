@@ -1,4 +1,7 @@
 const UserModel = require("../models/userModel.js");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+
 exports.getSignUp = (req, res) => {
     res.render("signUp");
 }
@@ -8,9 +11,13 @@ exports.getLogin = (req, res) => {
 
 exports.signUpUser = async (req, res) => {
     try {
-        // console.log(req.body);
-        const userData = new UserModel(req.body);
-        await userData.save();
+        const { userPassword, ...rest } = req.body
+        const hashedPassword = await bcrypt.hash(userPassword, 10)
+        // console.log(hashedPassword)
+        await UserModel.create({
+            ...rest,
+            userPassword: hashedPassword,
+        })
         res.redirect("/auth");
     } catch (error) {
         console.log(error)
@@ -19,17 +26,31 @@ exports.signUpUser = async (req, res) => {
 
 exports.loginUser = async (req, res) => {
     try {
-        const credentials = req.body;
-        // console.log(credentials);
-        const loginUser = await UserModel.findOne(credentials);
-        // console.log(loginUser);
-        if (!loginUser) {
-            return res.send("invalid user Name or Password...!");
+        const { userPassword, userEmail } = req.body;
+        const user = await UserModel.findOne({ userEmail });
+        // console.log(user);
+
+        if (!user) {
+            return res.send("No User found with this email...!");
         }
-        res.cookie("check", loginUser.id, {
-            maxAge: 24 * 60 * 60 * 1000,
-            httpOnly: true
-        })
+
+        const validPassword = await bcrypt.compare(userPassword, user.userPassword);
+        // console.log(validPassword);
+        if (validPassword) {
+            const token = jwt.sign({
+                userID: user._id,
+                userName: user.userName,
+            }, process.env.SECRET_KEY, {
+                expiresIn: "1h"
+            });
+
+            res.cookie("accessToken", token, {
+                httpOnly: true,
+                maxAge: 60 * 60 * 1000
+            })
+        } else {
+            return res.send("Invalid Password...!");
+        }
         res.redirect("/");
     } catch (error) {
         console.log(error);
@@ -37,6 +58,6 @@ exports.loginUser = async (req, res) => {
 }
 
 exports.logOut = (req, res) => {
-    res.clearCookie("check");
+    res.clearCookie("accessToken");
     res.redirect("/auth");
 }

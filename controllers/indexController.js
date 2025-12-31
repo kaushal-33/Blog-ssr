@@ -1,10 +1,11 @@
 const BlogModel = require("../models/blogModel.js");
 const fs = require("fs");
 const path = require("path");
+
 exports.home = async (req, res) => {
     try {
-        const data = await BlogModel.find({});
-        // console.log(data)
+        const data = await BlogModel.find({}).populate("blogAuthor", "userName");
+        console.log(data)
         res.render("index", { blogs: data });
     } catch (error) {
         console.log(error)
@@ -17,10 +18,16 @@ exports.blogForm = (req, res) => {
 
 exports.addBlog = async (req, res) => {
     try {
-        // console.log(req.body)
+        // console.log(req.userData)
+        const { userID } = req.userData;
         const { path } = req.file;
-        const blogData = new BlogModel({ ...req.body, blogImage: path });
-        await blogData.save();
+
+        await BlogModel.create({
+            ...req.body,
+            blogImage: path,
+            blogAuthor: userID
+        })
+
         res.redirect("/");
     } catch (error) {
         console.log(error)
@@ -74,7 +81,7 @@ exports.quickView = async (req, res) => {
     try {
         let { id } = req.params;
         let blog = await BlogModel.findById(id);
-        res.render("quickView", {blog});
+        res.render("quickView", { blog });
     } catch (error) {
         console.log(error)
     }

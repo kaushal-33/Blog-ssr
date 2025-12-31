@@ -15,8 +15,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 app.use("/uploads", express.static("uploads"));
 app.use(cookieParser());
+
 app.use("/auth", authRouter);
 app.use("/", isLogin, indexRouter);
+
 app.listen(PORT, () => {
     console.log("server started....!")
     console.log(`http://localhost:${PORT}`)

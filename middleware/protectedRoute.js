@@ -1,7 +1,20 @@
+const jwt = require("jsonwebtoken");
+
+
 exports.isLogin = (req, res, next) => {
-    const { check } = req.cookies;
-    if (!check) {
-        return res.redirect("/auth");
+    try {
+        const { accessToken } = req.cookies;
+
+        if (!accessToken) {
+            return res.send("Token expired, Login again...!");
+        }
+
+        const validToken = jwt.verify(accessToken, process.env.SECRET_KEY);
+        // console.log(validToken);
+
+        req.userData = validToken;
+        next();
+    } catch (error) {
+        console.log(error.message)
     }
-    next();
 }
