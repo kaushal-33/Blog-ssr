@@ -17,6 +17,11 @@ const blogSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    blogAuthor: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "UserModel",
+        required: true,
+    }
 })
 
 const BlogModel = mongoose.model("BlogModel", blogSchema);
